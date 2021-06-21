@@ -1,0 +1,119 @@
+---
+title: "Exploration"
+author: "Jack Chesson"
+date: "21/06/2021"
+output: html_document
+---
+
+# Introduction
+In this report we look at three corpora of US English text, a set of internet blogs posts, a set of internet news articles, and a set of twitter messages.
+
+We collect the following forms of information:
+
+ 1. file size
+ 2. number of lines
+ 3. number of non-empty lines
+ 4. number of words
+ 5. distribution of words (quantiles and plot)
+ 6. number of characters
+ 7. number of non-white characters
+
+For our analysis we use the R Studio environment [@R], as well as the libraries **stringi** [@stringi] and **ggplot2** [@ggplot2].
+This report is compiled using the **rmarkdown ** library [@rmarkdown] and [@knitr].
+
+# Data
+
+The data is presented as a [ZIP compressed archive](http://en.wikipedia.org/wiki/Zip_(file_format)), which is freely downloadable from [here](https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip).
+```{r}
+# specify the source and destination of the download
+destination_file <- "Coursera-SwiftKey.zip"
+source_file <- "http://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip"
+# execute the download
+download.file(source_file, destination_file)
+# extract the files from the zip file
+unzip(destination_file)
+```
+
+Inspect the unzipped files
+```{r}
+# find out which files where unzipped
+unzip(destination_file, list = TRUE )
+# inspect the data
+list.files("final")
+list.files("final/en_US")
+```
+
+The corpora are contained in three separate plain-text files,
+out of which one is binary.
+We import these files as follows.
+```{r}
+# import the blogs and twitter datasets in text mode
+blogs <- readLines("final/en_US/en_US.blogs.txt", encoding="UTF-8")
+twitter <- readLines("final/en_US/en_US.twitter.txt", encoding="UTF-8")
+# import the news dataset in binary mode
+con <- file("final/en_US/en_US.news.txt", open="rb")
+news <- readLines(con, encoding="UTF-8")
+close(con)
+rm(con)
+```
+
+
+
+# Basic Stats
+
+Before we analyse the files we look at their size (presented in MegaBytes / MBs).
+```{r}
+# file size (in MegaBytes/MB)
+file.info("final/en_US/en_US.blogs.txt")$size   / 1024^2
+file.info("final/en_US/en_US.news.txt")$size    / 1024^2
+file.info("final/en_US/en_US.twitter.txt")$size / 1024^2
+```
+
+For the analysis we need two libraries.
+```{r}
+# library for character string analysis
+library(stringi)
+# library for plotting
+library(ggplot2)
+```
+
+provide some general stats to work from,
+```{r}
+stri_stats_general( blogs )
+stri_stats_general( news )
+stri_stats_general( twitter )
+```
+
+Next we count the words per line. We summarise the distibution of these counts per corpus, using summary statistics and a distibution plot. we start with the **blogs** corpus.
+```{r}
+words_blogs   <- stri_count_words(blogs)
+summary( words_blogs )
+qplot(   words_blogs, binwidth = 3, xlim=c(0,300) )
+```
+
+Next we analys the **news** corpus.
+```{r}
+words_news    <- stri_count_words(news)
+summary( words_news )
+qplot(   words_news, binwidth = 3, xlim=c(0,200) )
+```
+
+Finally we analyse the **twitter** corpus.
+```{r}
+words_twitter <- stri_count_words(twitter)
+summary( words_twitter )
+qplot(   words_twitter, binwidth = 1 )
+```
+
+# Conclusions
+The file sizes are around 200 MegaBytes (MBs) per file.
+
+We find that the **blogs** and **news** corpora consist of about 1 million items each,
+and the *twitter** corpus consist of over 2 million items.
+Twitter messages have a character limit of 140, which explains why the word count is generally a much smaller domain of less than 40 words.
+
+This result is further supported by the fact that the number of characters is similar for all three corpora (around 200 million each).
+
+Finally we find that the frequency distributions of the **blogs** and **news ** corpora are similar.
+The frequency distribution of the **twitter** corpus is again different, as a result of the character limit.
+
