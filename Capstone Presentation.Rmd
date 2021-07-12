@@ -1,0 +1,35 @@
+---
+title: "Natural Language Processing Application: Data Science Capstone"
+author: "Jack Chesson"
+date: "11/07/2021"
+output: ioslides_presentation
+---
+
+## Overview and Suggested Purpose
+
+The App created uses text data from the english language to predict the next word in a sentence. The app uses a natural language processing model in order to predict language trends and frequently used groups of words.  
+
+The suggested use and purpose of this is to be used to improve fluency and efficiency of communication, provide assistance to individuals with any type of issue that would hinder their ability to correctly enter words efficiently, and can be used by anyone learning the language to improve comprehension of the language.
+
+## How the app was made
+
+The model uses a prediction method that sorts a clean data set of English text (sourced from various media) into "grams" of different phrasing lengths. The data follows the following process:
+
+* The model receives the raw text files and cleans them into a more readable format
+* The text is sorted by frequency into groups of 2,3,4,5, and 6 words
+* The sorted data is then written into its own data file based on group size
+* The input phrase runs through the prediction function and it produces an output from the sorted data sets
+
+## How the app works: Input
+
+The app user will input a word or the first words of a sentence or phrase in the box titled " Enter a word or part of phrase below " and then press the "Predict Next Word" Button
+
+![App Input Interface](Input.png)
+
+## How the app works: Output
+
+The input data is then processed through the app's prediction model explained in the overview. The app returns the most likely word to follow the input words according to the prediction model, below the "Suggested next word:" heading.
+
+![App Output Interface](Output.png)
+
+More details on the source coding can be found at :  https://github.com/jackchess1/Capstone.git

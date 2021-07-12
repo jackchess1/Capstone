@@ -1,0 +1,150 @@
+---
+title: "Creating N-Grams"
+author: "Jack Chesson"
+date: "09/07/2021"
+output: ioslides_presentation
+---
+
+## Loading Packages
+
+```{r}
+# Preload necessary R librabires
+library(dplyr)
+library(doParallel)
+library(stringi)
+library(SnowballC)
+library(tm)
+if(Sys.getenv("JAVA_HOME")!="")
+      Sys.setenv(JAVA_HOME="")
+#options(java.home="C:\\Program Files\\Java\\jre1.8.0_171\\")
+#library(rJava)
+library(RWeka)
+library(ggplot2)
+```
+
+
+## Loading the Data
+
+```{r}
+destination_file <- "Coursera-SwiftKey.zip"
+source_file <- "http://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip"
+# execute the download
+download.file(source_file, destination_file)
+# extract the files from the zip file
+unzip(destination_file)
+
+blogs <- readLines("final/en_US/en_US.blogs.txt", encoding="UTF-8")
+twitter <- readLines("final/en_US/en_US.twitter.txt", encoding="UTF-8")
+# import the news dataset in binary mode
+con <- file("final/en_US/en_US.news.txt", open="rb")
+news <- readLines(con, encoding="UTF-8")
+close(con)
+rm(con)
+```
+```{r}
+set.seed(10)
+# Remove all non english characters as they cause issues
+blogs <- iconv(blogs, "latin1", "ASCII", sub="")
+news <- iconv(news, "latin1", "ASCII", sub="")
+twitter <- iconv(twitter, "latin1", "ASCII", sub="")
+# Binomial sampling of the data and create the relevant files
+sample <- function(population, percentage) {
+      return(population[as.logical(rbinom(length(population),1,percentage))])
+}
+# Set sample percentage
+percent <- 0.04 #If memory issues comes, it needs to be further reduced
+samp_blogs   <- sample(blogs, percent)
+samp_news   <- sample(news, percent)
+samp_twitter   <- sample(twitter, percent)
+dir.create("sample", showWarnings = FALSE)
+#write(samp_blogs, "sample/sample.blogs.txt")
+#write(samp_news, "sample/sample.news.txt")
+#write(samp_twitter, "sample/sample.twitter.txt")
+samp_data <- c(samp_blogs,samp_news,samp_twitter)
+write(samp_data, "sample/sampleData.txt")
+```
+
+## Cleaning the Data
+
+```{r}
+directory <- file.path(".", "sample")
+#sample_data <- Corpus(DirSource(directory))
+#Used VCorpus to load the data as a corpus since the NGramTokenizer not working as #expected for bigrams and trigrams for the latest version 0.7-5 of tm package.
+sample_data <- VCorpus(DirSource(directory)) # load the data as a corpus
+sample_data <- tm_map(sample_data, content_transformer(tolower))
+profanity <- readLines("http://www.cs.cmu.edu/~biglou/resources/bad-words.txt")
+profanity <- profanity[-(which(profanity%in%c("refugee","reject","remains","screw","welfare","sweetness","shoot","sick","shooting","servant","sex","radical","racial","racist","republican","public","molestation","mexican","looser","lesbian","liberal","kill","killing","killer","heroin","fraud","fire","fight","fairy","^die","death","desire","deposit","crash","^crim","crack","^color","cigarette","church","^christ","canadian","cancer","^catholic","cemetery","buried","burn","breast","^bomb","^beast","attack","australian","balls","baptist","^addict","abuse","abortion","amateur","asian","aroused","angry","arab","bible")==TRUE))]
+
+sample_data <- tm_map(sample_data, removeWords, profanity)
+
+removeURL <- function(x) gsub("http[[:alnum:]]*", "",x)
+
+sample_data <- tm_map(sample_data, content_transformer(removeURL))
+
+toSpace <- content_transformer(function(x, pattern) gsub(pattern, " ", x))
+sample_data <- tm_map(sample_data, toSpace, "(f|ht)tp(s?)://(.*)[.][a-z]+")
+sample_data <- tm_map(sample_data, toSpace, "@[^\\s]+")
+sample_data <- tm_map(sample_data, tolower) # convert to lowercase
+#sample_data <- tm_map(sample_data, removeWords, stopwords("en"))#remove english stop words
+sample_data <- tm_map(sample_data, removePunctuation) # remove punctuation
+sample_data <- tm_map(sample_data, removeNumbers) # remove numbers
+sample_data <- tm_map(sample_data, stripWhitespace) # remove extra whitespaces
+#sample_data <- tm_map(sample_data, stemDocument) # initiate stemming
+sample_data <- tm_map(sample_data, PlainTextDocument)
+sample_corpus <- data.frame(text=unlist(sapply(sample_data,'[',"content")),stringsAsFactors = FALSE)
+head(sample_corpus)
+
+
+
+
+```
+
+
+# N-Grams Baby
+
+```{r}
+
+review_DTM <- DocumentTermMatrix(sample_data)
+review_DTM
+```
+
+### Unigrams
+
+Will return which individual words are most frequent
+
+```{r}
+unigramTokenizer <- function(x) {
+  NGramTokenizer(x,Weka_control(min = 1, max = 1))
+}
+
+unigrams <- DocumentTermMatrix(sample_data, control = list(tokenize = unigramTokenizer))
+```
+
+### Bigrams 
+
+```{r}
+BigramTokenizer <- function(x) {
+      NGramTokenizer(x, Weka_control(min = 2, max = 2))
+}
+bigrams <- DocumentTermMatrix(sample_data, control = list(tokenize = BigramTokenizer))
+```
+
+### Trigrams
+
+```{r}
+trigramTokenizer <- function(x) {
+      NGramTokenizer(x, Weka_control(min = 3, max = 3))
+}
+trigrams <- DocumentTermMatrix(sample_data, control = list(tokenize = trigramTokenizer))
+```
+
+### Quads
+
+```{r}
+quadgramTokenizer <- function(x) {
+      NGramTokenizer(x, Weka_control(min = 4, max = 4))
+}
+quadgrams <- DocumentTermMatrix(sample_data, control = list(tokenize = quadgramTokenizer))
+```
+
+

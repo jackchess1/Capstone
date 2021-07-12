@@ -1,0 +1,17 @@
+---
+title: "Overview"
+author: "Jack Chesson"
+date: "11/07/2021"
+output: html_document
+---
+# Project Overview
+
+In this project, an app is presented as a function to predict words in a sentence. The goal is to use text data from multiple media sources in the english language to model frequently grouped words and use that model to predict the following word in the sentence. 
+
+# App Instructions
+
+Using the input box, the user will enter a few words from a phrase or a common sentence and by pressing the Prompt, the app will process the sentence and, if the sentence is recognized by the prediction model, the app will output the most probable word to follow in the sentence.
+
+# Overview of the Model
+
+The R script takes raw text files as training data and identifies word frequent word combinations up to 6 words. The frequencies are sorted for use in prediction, and used in coordination with the app input to predict the next word in the input sentence.
